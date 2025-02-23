@@ -13,7 +13,12 @@ namespace DatabaseConsole.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-           
+            modelBuilder.Entity<Project>(entity =>
+            {
+                entity.Property(p => p.TotalPrice)
+                      .HasPrecision(18, 2); // 18 totala siffror, varav 2 decimaler
+            });
+
             base.OnModelCreating(modelBuilder);
         }
     }

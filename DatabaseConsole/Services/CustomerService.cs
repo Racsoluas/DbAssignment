@@ -1,55 +1,35 @@
 ﻿using System.Net.Http.Json;
+using DatabaseConsole.Data;
 using DatabaseConsole.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace DatabaseConsole.Services;
 
 public class CustomerService
 {
-    private readonly HttpClient _httpClient;
-    private const string BaseUrl = "https://localhost:7001/api/customers";
+    private readonly AppDbContext _context;
 
-    public CustomerService()
+    public CustomerService(AppDbContext context)
     {
-        _httpClient = new HttpClient { BaseAddress = new Uri("https://localhost:7001/") };
+        _context = context;
     }
 
-    public async Task<List<Customer>> GetAllCustomers()
-    {
-        try
-        {
-            var response = await _httpClient.GetFromJsonAsync<List<Customer>>(BaseUrl);
-            return response ?? new List<Customer>();
-        }
-        catch (Exception ex)
-        {
-            System.Console.WriteLine($"Error fetching customers: {ex.Message}");
-            return new List<Customer>();
-        }
-    }
+    public async Task<List<Customer>> GetAllCustomers() => 
+        await _context.Customers.ToListAsync();
 
-    public async Task<Customer?> GetCustomer(int id)
-    {
-        try
-        {
-            return await _httpClient.GetFromJsonAsync<Customer>($"{BaseUrl}/{id}");
-        }
-        catch (Exception ex)
-        {
-            System.Console.WriteLine($"Error fetching customer: {ex.Message}");
-            return null;
-        }
-    }
+    public async Task<Customer?> GetCustomer(int id) => 
+        await _context.Customers.FindAsync(id);
 
     public async Task<bool> CreateCustomer(Customer customer)
     {
         try
         {
-            var response = await _httpClient.PostAsJsonAsync(BaseUrl, customer);
-            return response.IsSuccessStatusCode;
+            await _context.Customers.AddAsync(customer);
+            await _context.SaveChangesAsync();
+            return true;
         }
-        catch (Exception ex)
+        catch
         {
-            System.Console.WriteLine($"Error creating customer: {ex.Message}");
             return false;
         }
     }
@@ -58,14 +38,13 @@ public class CustomerService
     {
         try
         {
-            var response = await _httpClient.PutAsJsonAsync($"{BaseUrl}/{id}", customer);
-            return response.IsSuccessStatusCode;
+            _context.Customers.Update(customer);
+            await _context.SaveChangesAsync();
+            return true;
         }
-        catch (Exception ex)
+        catch
         {
-            System.Console.WriteLine($"Error updating customer: {ex.Message}");
             return false;
         }
     }
-
 }
